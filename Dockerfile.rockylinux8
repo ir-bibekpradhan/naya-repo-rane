@@ -1,0 +1,40 @@
+# ---- Build stage ----
+FROM rockylinux:8 AS builder
+
+WORKDIR /app
+
+RUN dnf install -y \
+    python3 \
+    python3-pip \
+    gcc \
+    libffi-devel \
+    ca-certificates \
+    && dnf clean all
+
+COPY requirements.txt .
+
+RUN python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ---- Runtime stage ----
+FROM rockylinux:8
+
+WORKDIR /app
+
+RUN dnf install -y \
+    python3 \
+    ca-certificates \
+    && dnf clean all
+
+COPY --from=builder /install /usr/local
+COPY src/ ./src/
+
+RUN useradd --create-home appuser
+
+
+ENV APP_NAME=docker-python \
+    APP_ENV=production \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+CMD ["python3", "-m", "src.app.main"]

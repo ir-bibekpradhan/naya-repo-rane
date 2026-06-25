@@ -1,0 +1,80 @@
+ARG BASE_IMAGE=rockylinux:8
+
+# ---- Build stage ----
+FROM ${BASE_IMAGE} AS builder
+
+WORKDIR /app
+
+# Install Python and build dependencies based on available package manager
+RUN if command -v apt-get >/dev/null 2>&1; then \
+      apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-venv \
+        gcc \
+        libffi-dev \
+        ca-certificates \
+      && rm -rf /var/lib/apt/lists/*; \
+    elif command -v dnf >/dev/null 2>&1; then \
+      dnf install -y \
+        python3 \
+        python3-pip \
+        gcc \
+        libffi-devel \
+        ca-certificates \
+      && dnf clean all; \
+    elif command -v yum >/dev/null 2>&1; then \
+      yum install -y \
+        python3 \
+        python3-pip \
+        gcc \
+        libffi-devel \
+        ca-certificates \
+      && yum clean all; \
+    else \
+      echo "Unsupported package manager"; \
+      exit 1; \
+    fi
+
+COPY requirements.txt .
+
+RUN python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ---- Runtime stage ----
+FROM ${BASE_IMAGE}
+
+WORKDIR /app
+
+RUN if command -v apt-get >/dev/null 2>&1; then \
+      apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        ca-certificates \
+      && rm -rf /var/lib/apt/lists/*; \
+    elif command -v dnf >/dev/null 2>&1; then \
+      dnf install -y \
+        python3 \
+        ca-certificates \
+      && dnf clean all; \
+    elif command -v yum >/dev/null 2>&1; then \
+      yum install -y \
+        python3 \
+        ca-certificates \
+      && yum clean all; \
+    else \
+      echo "Unsupported package manager"; \
+      exit 1; \
+    fi
+
+COPY --from=builder /install /usr/local
+COPY src/ ./src/
+
+RUN useradd --create-home appuser
+
+
+ENV APP_NAME=docker-python \
+    APP_ENV=production \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+CMD ["python3", "-m", "src.app.main"]

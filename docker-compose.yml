@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docker-python:local
+    container_name: docker-python-app
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=development
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./src:/app/src:ro
+    restart: "no"

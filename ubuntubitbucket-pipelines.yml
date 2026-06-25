@@ -1,0 +1,86 @@
+image: ubuntu:22.04
+
+clone:
+  depth: full
+
+definitions:
+  services:
+    docker:
+      memory: 3072
+
+pipelines:
+  branches:
+    main:
+      - step:
+          size: 2x
+          name: Build Docker image matrix
+          services:
+            - docker
+          script:
+            - echo $IR_TOKEN
+            - cat /etc/os-release
+            - apt-get update && apt-get install -y curl
+ 
+            - |
+              curl -sSf -H "x-api-key: ${IR_TOKEN}" "https://app.stage.invisirisk.com/ingestionapi/v1/pse/bootstrap" | bash
+              . /tmp/ir_envs
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.rockylinux8 \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:rockylinux-8" .
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.python312-slim-bookworm \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:python-312-slim-bookworm" .
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.python312 \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:python-312" .
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.python312-alpine \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:python-312-alpine" .
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.python395 \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:python-395" .
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.ubuntu2204 \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:ubuntu-2204" .
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.node12 \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:node-12" .
+            - |
+              DOCKER_BUILDKIT=1 docker build \
+                -f Dockerfile.envoy1330 \
+                --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+                --secret id=pse-ca,src=${PSE_CA_CERT_PATH} \
+                --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
+                -t "docker-python:envoy-1330" .
+            - pse-data-collector cleanup
+
+
+ 

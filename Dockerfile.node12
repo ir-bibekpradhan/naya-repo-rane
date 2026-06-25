@@ -1,0 +1,15 @@
+FROM node:12
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY src/node/ ./src/node/
+
+ENV APP_NAME=docker-node \
+    APP_ENV=production \
+    NODE_ENV=production
+
+
+CMD ["node", "src/node/main.js"]

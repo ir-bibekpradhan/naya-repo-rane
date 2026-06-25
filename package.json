@@ -1,0 +1,16 @@
+{
+  "name": "docker-node",
+  "version": "0.1.0",
+  "description": "Node.js Docker image for CI Docker build testing",
+  "private": true,
+  "main": "src/node/main.js",
+  "scripts": {
+    "start": "node src/node/main.js",
+    "test": "node --check src/node/main.js"
+  },
+  "engines": {
+    "node": "12.x"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {}
+}
