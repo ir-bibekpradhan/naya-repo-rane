@@ -56,7 +56,7 @@ jobs:
         run: |
           docker build \
             -f ${{ matrix.dockerfile }} \
-            --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:dev-test \
+            --build-arg BUILDKIT_SYNTAX=public.ecr.aws/w3c0c0n7/invisirisk/baf-buildkit:latest \
             --secret id=pse-ca,src=/etc/ssl/certs/pse.pem \
             --build-arg PSE_PROXY=http://${PSE_PROXY_IP}:3128 \
             -t docker-python:${{ matrix.name }} \
